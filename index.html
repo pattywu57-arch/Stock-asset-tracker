@@ -10,9 +10,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#2563eb">
   
-  <link rel="manifest" href='data:application/manifest+json,{"name":"股票資產日記","short_name":"資產日記","start_url":".","display":"standalone","background_color":"#f3f4f6","theme_color":"#2563eb","orientation":"portrait"}' />
+  <!-- 已經幫你加上了剛剛上傳的 icon.png 連結！ -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"股票資產日記","short_name":"資產日記","start_url":".","display":"standalone","background_color":"#f3f4f6","theme_color":"#2563eb","orientation":"portrait","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"},{"src":"icon.png","sizes":"192x192","type":"image/png"}]}' />
 
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -90,7 +91,7 @@
               <input type="number" v-model.number="form.twIn" placeholder="0" class="w-full p-2 rounded border border-gray-300 text-right text-red-600">
             </div>
             <div>
-              <label class="text-xs text-gray-600 block mb-1">匯出現金 (出金)</label>
+              <label class="text-xs text-gray-600 block mb-1">匯出現現金 (出金)</label>
               <input type="number" v-model.number="form.twOut" placeholder="0" class="w-full p-2 rounded border border-gray-300 text-right text-green-600">
             </div>
           </div>
@@ -114,7 +115,7 @@
               <input type="number" v-model.number="form.usIn" placeholder="0" class="w-full p-2 rounded border border-gray-300 text-right text-red-600">
             </div>
             <div>
-              <label class="text-xs text-gray-600 block mb-1">匯出現金 (出金)</label>
+              <label class="text-xs text-gray-600 block mb-1">匯出現現金 (出金)</label>
               <input type="number" v-model.number="form.usOut" placeholder="0" class="w-full p-2 rounded border border-gray-300 text-right text-green-600">
             </div>
           </div>
