@@ -4,90 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>股票資產日記</title>
-  
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#2563eb">
-  
   <link rel="manifest" href='data:application/manifest+json,{"name":"股票資產日記","short_name":"資產日記","start_url":".","display":"standalone","background_color":"#f3f4f6","theme_color":"#2563eb","orientation":"portrait","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"},{"src":"icon.png","sizes":"192x192","type":"image/png"}]}' />
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
   <style>
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      -webkit-tap-highlight-color: transparent; 
-      margin: 0;
-      height: 100vh; 
-      height: 100dvh; 
-      overflow: hidden;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; margin: 0; height: 100vh; height: 100dvh; overflow: hidden; }
     html { overscroll-behavior: none; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
   <div id="app" class="max-w-md mx-auto bg-white h-full flex flex-col shadow-lg relative">
-    
     <header :class="['p-4 text-white text-center shadow-sm relative transition-colors shrink-0', isCloudMode ? 'bg-indigo-600' : 'bg-blue-600']">
       <h1 class="text-lg font-bold">資產追蹤日記</h1>
       <span class="absolute right-4 top-4 text-xs bg-white/20 px-2 py-1 rounded-full font-medium">
-        <i :class="['fas mr-1', isCloudMode ? 'fa-cloud' : 'fa-mobile-alt']"></i>
-        {{ isCloudMode ? '雲端模式' : '本機模式' }}
+        <i :class="['fas mr-1', isCloudMode ? 'fa-cloud' : 'fa-mobile-alt']"></i>{{ isCloudMode ? '雲端模式' : '本機模式' }}
       </span>
     </header>
-
     <main class="flex-1 p-4 overflow-y-auto">
-      
       <div v-show="activeTab === 'home'">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 text-center">
           <p class="text-gray-500 text-sm mb-1">總資產 (TWD)</p>
           <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ formatMoney(totalAssetTwd) }}</h2>
-          
           <div class="grid grid-cols-2 gap-4 border-t pt-4">
             <div>
               <p class="text-xs text-gray-500 mb-1">台股總損益</p>
-              <p :class="['font-semibold', twPnL >= 0 ? 'text-red-500' : 'text-green-500']">
-                {{ twPnL >= 0 ? '+' : '' }}{{ formatMoney(twPnL) }}
-              </p>
+              <p :class="['font-semibold', twPnL >= 0 ? 'text-red-500' : 'text-green-500']">{{ twPnL >= 0 ? '+' : '' }}{{ formatMoney(twPnL) }}</p>
             </div>
             <div class="border-l relative">
               <p class="text-xs text-gray-500 mb-1">美股總損益 (USD)</p>
-              <p :class="['font-semibold', usPnL >= 0 ? 'text-red-500' : 'text-green-500']">
-                {{ usPnL >= 0 ? '+' : '' }}{{ formatMoney(usPnL) }}
-              </p>
+              <p :class="['font-semibold', usPnL >= 0 ? 'text-red-500' : 'text-green-500']">{{ usPnL >= 0 ? '+' : '' }}{{ formatMoney(usPnL) }}</p>
               <p class="text-[10px] text-gray-400 mt-1">約 TWD {{ usPnL >= 0 ? '+' : '' }}{{ formatMoney(usPnL * settings.usdRate) }}</p>
             </div>
           </div>
         </div>
-
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-          <h3 class="text-gray-600 font-semibold mb-3 text-sm">
-            <i class="fas fa-chart-line mr-2" :class="isCloudMode ? 'text-indigo-500' : 'text-blue-500'"></i>
-            資產走勢 (TWD)
-          </h3>
+          <h3 class="text-gray-600 font-semibold mb-3 text-sm"><i class="fas fa-chart-line mr-2" :class="isCloudMode ? 'text-indigo-500' : 'text-blue-500'"></i>資產走勢 (TWD)</h3>
           <canvas id="assetChart" width="400" height="250"></canvas>
         </div>
       </div>
-
       <div v-show="activeTab === 'record'">
         <h2 class="text-xl font-bold mb-4 text-gray-800">資產結算</h2>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">記錄日期</label>
           <input type="date" v-model="form.date" class="w-full border-gray-300 rounded-lg p-2 border focus:border-blue-500 focus:outline-none">
         </div>
-
         <div class="bg-blue-50 rounded-lg p-4 mb-4">
           <h3 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2 flex justify-between items-center">
             <span>台股帳戶餘額 (TWD)</span>
             <span class="text-xs font-normal text-blue-500 cursor-pointer" @click="activeTab = 'settings'">管理帳戶 ➔</span>
           </h3>
-          <div v-if="settings.twAccounts.length === 0" class="text-center py-2 text-gray-400 text-sm">
-            尚未新增任何台股帳戶，請至設定新增。
-          </div>
+          <div v-if="settings.twAccounts.length === 0" class="text-center py-2 text-gray-400 text-sm">尚未新增任何台股帳戶，請至設定新增。</div>
           <div v-for="acc in settings.twAccounts" :key="acc" class="flex items-center mb-3">
             <span class="w-24 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
             <input type="number" v-model.number="form.twAssets[acc]" placeholder="今日餘額" class="flex-1 p-2 rounded border border-gray-300 text-right">
@@ -103,31 +75,21 @@
             </div>
           </div>
         </div>
-
         <div class="bg-green-50 rounded-lg p-4 mb-6">
           <div class="flex justify-between items-center border-b border-green-200 pb-2 mb-3">
             <h3 class="font-bold text-green-800">美股帳戶餘額</h3>
             <span class="text-xs font-normal text-green-500 cursor-pointer" @click="activeTab = 'settings'">管理帳戶 ➔</span>
           </div>
-
-          <div v-if="settings.usAccounts.length === 0" class="text-center py-2 text-gray-400 text-sm">
-            尚未新增任何美股帳戶，請至設定新增。
-          </div>
-          
+          <div v-if="settings.usAccounts.length === 0" class="text-center py-2 text-gray-400 text-sm">尚未新增任何美股帳戶，請至設定新增。</div>
           <div v-for="acc in settings.usAccounts" :key="acc" class="flex items-center mb-3">
             <span class="w-16 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
-            <button @click="toggleUsAccCurrency(acc)" class="px-2 py-1 text-[10px] bg-white border border-green-200 text-gray-600 rounded mr-2 font-bold w-12 text-center shadow-sm">
-              {{ getUsAccCurrency(acc) }}
-            </button>
+            <button @click="toggleUsAccCurrency(acc)" class="px-2 py-1 text-[10px] bg-white border border-green-200 text-gray-600 rounded mr-2 font-bold w-12 text-center shadow-sm">{{ getUsAccCurrency(acc) }}</button>
             <input type="number" v-model.number="form.usAssets[acc]" :placeholder="'餘額 (' + getUsAccCurrency(acc) + ')'" class="flex-1 p-2 rounded border border-gray-300 text-right">
           </div>
-          
           <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-green-200">
             <div class="col-span-2 flex justify-between items-center mb-1">
               <span class="text-xs text-gray-600 font-bold">加碼/出金 獨立設定</span>
-              <button @click="toggleUsFlowCurrency" class="px-2 py-1 text-[10px] bg-green-100 text-green-800 rounded font-bold shadow-sm">
-                目前使用 {{ settings.usFlowCurrency || 'USD' }} 輸入 ↻
-              </button>
+              <button @click="toggleUsFlowCurrency" class="px-2 py-1 text-[10px] bg-green-100 text-green-800 rounded font-bold shadow-sm">目前使用 {{ settings.usFlowCurrency || 'USD' }} 輸入 ↻</button>
             </div>
             <div>
               <label class="text-[10px] text-gray-500 block mb-1">匯入加碼 ({{ settings.usFlowCurrency || 'USD' }})</label>
@@ -139,25 +101,17 @@
             </div>
           </div>
         </div>
-
-        <button @click="saveRecord" :class="['w-full text-white font-bold py-3 px-4 rounded-xl shadow-md transition', isCloudMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700']">
-          儲存紀錄
-        </button>
+        <button @click="saveRecord" :class="['w-full text-white font-bold py-3 px-4 rounded-xl shadow-md transition', isCloudMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700']">儲存紀錄</button>
       </div>
-
       <div v-show="activeTab === 'settings'">
         <h2 class="text-xl font-bold mb-4 text-gray-800">設定與帳戶管理</h2>
-        
         <div class="bg-white rounded-lg border p-4 mb-4 flex justify-between items-center shadow-sm">
           <div>
             <h3 class="font-bold text-gray-800">儲存模式</h3>
             <p class="text-xs text-gray-500">{{ isCloudMode ? '目前儲存於雲端帳號' : '目前儲存於本機裝置' }}</p>
           </div>
-          <button @click="toggleMode" :class="['px-4 py-2 rounded-full font-bold text-sm text-white transition-colors', isCloudMode ? 'bg-gray-500' : 'bg-indigo-600']">
-            切換至{{ isCloudMode ? '本機' : '雲端' }}
-          </button>
+          <button @click="toggleMode" :class="['px-4 py-2 rounded-full font-bold text-sm text-white transition-colors', isCloudMode ? 'bg-gray-500' : 'bg-indigo-600']">切換至{{ isCloudMode ? '本機' : '雲端' }}</button>
         </div>
-
         <div class="bg-white rounded-lg border p-4 mb-4 shadow-sm">
           <h3 class="font-bold text-gray-800 mb-3 border-b pb-2"><i class="fas fa-wallet mr-2 text-blue-500"></i>台股帳戶管理</h3>
           <div class="space-y-2 mb-3">
@@ -171,7 +125,6 @@
             <button @click="addAccount('tw')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm">新增</button>
           </div>
         </div>
-
         <div class="bg-white rounded-lg border p-4 mb-4 shadow-sm">
           <h3 class="font-bold text-gray-800 mb-3 border-b pb-2"><i class="fas fa-globe mr-2 text-green-500"></i>美股帳戶管理</h3>
           <div class="space-y-2 mb-3">
@@ -185,29 +138,21 @@
             <button @click="addAccount('us')" class="bg-green-600 text-white px-4 py-2 rounded font-bold text-sm">新增</button>
           </div>
         </div>
-
         <div class="bg-white rounded-lg border p-4 mb-4 shadow-sm">
           <label class="block text-sm font-bold text-gray-700 mb-2">美金匯率 (用於計算總資產)</label>
           <input type="number" v-model.number="settings.usdRate" @change="saveData" class="w-full p-2 border rounded focus:border-blue-500 outline-none">
         </div>
-
         <div class="bg-white rounded-lg border p-4 mb-4 space-y-4 shadow-sm">
           <h3 class="font-bold text-gray-700 mb-2"><i class="fas fa-file-export mr-2 text-blue-500"></i>匯出與匯入</h3>
-          <button @click="exportData" class="w-full bg-gray-800 text-white py-3 rounded shadow-sm font-medium">
-            匯出資料 (下載 JSON 檔)
-          </button>
-          
+          <button @click="exportData" class="w-full bg-gray-800 text-white py-3 rounded shadow-sm font-medium">匯出資料 (下載 JSON 檔)</button>
           <div class="relative">
             <input type="file" @change="importData" accept=".json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-            <button class="w-full bg-white border-2 border-gray-800 text-gray-800 py-3 rounded shadow-sm font-medium">
-              匯入資料 (選擇檔案)
-            </button>
+            <button class="w-full bg-white border-2 border-gray-800 text-gray-800 py-3 rounded shadow-sm font-medium">匯入資料 (選擇檔案)</button>
           </div>
           <p class="text-xs text-gray-500 text-center mt-2">提示：匯入資料會覆蓋目前的紀錄。</p>
         </div>
       </div>
     </main>
-
     <nav class="bg-white border-t border-gray-200 flex justify-around w-full shrink-0 pt-3 pb-6">
       <button @click="activeTab = 'home'" :class="['flex-1 py-2 text-center transition-colors', activeTab === 'home' ? (isCloudMode ? 'text-indigo-600' : 'text-blue-600') : 'text-gray-400']">
         <i class="fas fa-home text-xl mb-1 block"></i><span class="text-xs font-medium">首頁</span>
@@ -220,33 +165,26 @@
       </button>
     </nav>
   </div>
-
   <script>
     const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
-
     createApp({
       setup() {
         const activeTab = ref('home');
         const isCloudMode = ref(false);
         let chartInstance = null;
-        
         const newTwAccountName = ref('');
         const newUsAccountName = ref('');
-        
         const defaultSettings = { twAccounts: ['群益', '元大', '中信'], usAccounts: ['Firstrade', '嘉信', 'IB'], usdRate: 32.5 };
         const settings = ref({ ...defaultSettings });
         const records = ref([]);
         const costTW = ref(0);
         const costUS = ref(0);
-
         const getToday = () => {
           const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
           return d.toISOString().split('T')[0];
         };
         const form = ref({ date: getToday(), twAssets: {}, usAssets: {}, twIn: null, twOut: null, usIn: null, usOut: null });
-
         const getStorageKey = () => isCloudMode.value ? 'stock_app_cloud_v1' : 'stock_app_local_v1';
-        
         const loadData = () => {
           const raw = localStorage.getItem(getStorageKey());
           if (raw) {
@@ -261,13 +199,9 @@
           if (!settings.value.usAccountCurrencies) settings.value.usAccountCurrencies = {};
           if (!settings.value.usFlowCurrency) settings.value.usFlowCurrency = 'USD';
         };
-
         const saveData = () => {
-          localStorage.setItem(getStorageKey(), JSON.stringify({
-            settings: settings.value, records: records.value, costTW: costTW.value, costUS: costUS.value
-          }));
+          localStorage.setItem(getStorageKey(), JSON.stringify({ settings: settings.value, records: records.value, costTW: costTW.value, costUS: costUS.value }));
         };
-
         const loadFormForDate = (dateStr) => {
           const existingRecord = records.value.find(r => r.date === dateStr);
           if (existingRecord) {
@@ -278,19 +212,11 @@
             form.value.usIn = existingRecord.usIn || null;
             form.value.usOut = existingRecord.usOut || null;
           } else {
-            form.value.twAssets = {};
-            form.value.usAssets = {};
-            form.value.twIn = null;
-            form.value.twOut = null;
-            form.value.usIn = null;
-            form.value.usOut = null;
+            form.value.twAssets = {}; form.value.usAssets = {};
+            form.value.twIn = null; form.value.twOut = null; form.value.usIn = null; form.value.usOut = null;
           }
         };
-
-        watch(() => form.value.date, (newDate) => {
-           loadFormForDate(newDate);
-        });
-
+        watch(() => form.value.date, (newDate) => { loadFormForDate(newDate); });
         const getUsAccCurrency = (acc) => settings.value.usAccountCurrencies[acc] || 'USD';
         const toggleUsAccCurrency = (acc) => {
             settings.value.usAccountCurrencies[acc] = getUsAccCurrency(acc) === 'USD' ? 'TWD' : 'USD';
@@ -300,7 +226,6 @@
             settings.value.usFlowCurrency = settings.value.usFlowCurrency === 'USD' ? 'TWD' : 'USD';
             saveData();
         };
-
         const addAccount = (type) => {
           if (type === 'tw') {
             const name = newTwAccountName.value.trim();
@@ -317,31 +242,20 @@
           }
           saveData();
         };
-
         const removeAccount = (type, index) => {
           if (!confirm('刪除帳戶不會刪除歷史紀錄，但在今日記帳時會移除該項目，確定刪除嗎？')) return;
-          if (type === 'tw') {
-            settings.value.twAccounts.splice(index, 1);
-          } else {
-            settings.value.usAccounts.splice(index, 1);
-          }
+          if (type === 'tw') { settings.value.twAccounts.splice(index, 1); }
+          else { settings.value.usAccounts.splice(index, 1); }
           saveData();
         };
-
         const toggleMode = () => {
           isCloudMode.value = !isCloudMode.value;
           loadData();
           loadFormForDate(form.value.date);
           if(activeTab.value === 'home') renderChart();
-          alert(`已切換至 ${isCloudMode.value ? '雲端' : '本機'} 模式！\n(兩邊的資料是分開的，可透過匯出匯入搬移資料)`);
+          alert(`已切換至 ${isCloudMode.value ? '雲端' : '本機'} 模式！`);
         };
-
-        onMounted(() => {
-          loadData();
-          loadFormForDate(form.value.date);
-          renderChart();
-        });
-
+        onMounted(() => { loadData(); loadFormForDate(form.value.date); renderChart(); });
         const latestRecord = computed(() => records.value.length > 0 ? records.value[records.value.length - 1] : null);
         const totalAssetTwd = computed(() => {
           if (!latestRecord.value) return 0;
@@ -349,116 +263,70 @@
         });
         const twPnL = computed(() => latestRecord.value ? latestRecord.value.totalTW - costTW.value : 0);
         const usPnL = computed(() => latestRecord.value ? latestRecord.value.totalUS - costUS.value : 0);
-
         const saveRecord = () => {
           if(!form.value.date) return alert("請選擇日期！");
-          
           let twSum = 0; let usSum = 0;
           settings.value.twAccounts.forEach(acc => { twSum += Number(form.value.twAssets[acc] || 0) });
-          
-          let uIn = Number(form.value.usIn || 0); 
-          let uOut = Number(form.value.usOut || 0);
+          let uIn = Number(form.value.usIn || 0); let uOut = Number(form.value.usOut || 0);
           let usFlowCurrency = settings.value.usFlowCurrency || 'USD';
-          
-          if (usFlowCurrency === 'TWD') {
-             uIn = uIn / settings.value.usdRate;
-             uOut = uOut / settings.value.usdRate;
-          }
-
+          if (usFlowCurrency === 'TWD') { uIn = uIn / settings.value.usdRate; uOut = uOut / settings.value.usdRate; }
           settings.value.usAccounts.forEach(acc => { 
             let val = Number(form.value.usAssets[acc] || 0);
-            let curr = getUsAccCurrency(acc);
-            if (curr === 'TWD') {
-                usSum += (val / settings.value.usdRate);
-            } else {
-                usSum += val;
-            }
+            usSum += (getUsAccCurrency(acc) === 'TWD' ? (val / settings.value.usdRate) : val);
           });
-
           const tIn = Number(form.value.twIn || 0); const tOut = Number(form.value.twOut || 0);
-          
           const idx = records.value.findIndex(r => r.date === form.value.date);
-          
           if (idx >= 0) {
              const oldR = records.value[idx];
-             let oldUIn = Number(oldR.usIn || 0);
-             let oldUOut = Number(oldR.usOut || 0);
-             let oldFlowCurr = oldR.usFlowCurrency || 'USD';
-             if (oldFlowCurr === 'TWD') {
-                 oldUIn = oldUIn / settings.value.usdRate;
-                 oldUOut = oldUOut / settings.value.usdRate;
-             }
+             let oldUIn = Number(oldR.usIn || 0); let oldUOut = Number(oldR.usOut || 0);
+             if ((oldR.usFlowCurrency || 'USD') === 'TWD') { oldUIn /= settings.value.usdRate; oldUOut /= settings.value.usdRate; }
              costTW.value = costTW.value - Number(oldR.twIn || 0) + Number(oldR.twOut || 0);
              costUS.value = costUS.value - oldUIn + oldUOut;
           }
-
           costTW.value = costTW.value + tIn - tOut;
           costUS.value = costUS.value + uIn - uOut;
-
           const newRecord = { 
-            date: form.value.date, 
-            totalTW: twSum, totalUS: usSum, 
+            date: form.value.date, totalTW: twSum, totalUS: usSum, 
             costTWSnapshot: costTW.value, costUSSnapshot: costUS.value,
             twAssets: { ...form.value.twAssets }, usAssets: { ...form.value.usAssets },
             twIn: form.value.twIn, twOut: form.value.twOut,
-            usIn: form.value.usIn, usOut: form.value.usOut,
-            usFlowCurrency: usFlowCurrency
+            usIn: form.value.usIn, usOut: form.value.usOut, usFlowCurrency
           };
-
-          if (idx >= 0) {
-             records.value[idx] = newRecord;
-          } else {
-            records.value.push(newRecord);
-            records.value.sort((a,b) => new Date(a.date) - new Date(b.date));
-          }
-
+          if (idx >= 0) { records.value[idx] = newRecord; }
+          else { records.value.push(newRecord); records.value.sort((a,b) => new Date(a.date) - new Date(b.date)); }
           saveData();
-          
           form.value.twIn = null; form.value.twOut = null; form.value.usIn = null; form.value.usOut = null;
-          form.value.usAssets = {}; 
-          form.value.twAssets = {};
-          
+          form.value.usAssets = {}; form.value.twAssets = {};
           alert("儲存成功！");
           activeTab.value = 'home';
         };
-
         const renderChart = async () => {
           await nextTick();
           const ctx = document.getElementById('assetChart');
           if (!ctx) return;
           if (chartInstance) chartInstance.destroy();
-          
           const labels = records.value.map(r => r.date.substring(5));
           const dataPoints = records.value.map(r => r.totalTW + (r.totalUS * settings.value.usdRate));
           const color = isCloudMode.value ? '#4f46e5' : '#2563eb';
-
           chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
               labels: labels,
-              datasets: [{
-                label: '總資產 (TWD)', data: dataPoints, borderColor: color,
-                backgroundColor: isCloudMode.value ? 'rgba(79, 70, 229, 0.1)' : 'rgba(37, 99, 235, 0.1)',
-                borderWidth: 2, fill: true, tension: 0.3, pointRadius: 3
-              }]
+              datasets: [{ label: '總資產 (TWD)', data: dataPoints, borderColor: color, backgroundColor: isCloudMode.value ? 'rgba(79, 70, 229, 0.1)' : 'rgba(37, 99, 235, 0.1)', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 3 }]
             },
             options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } } } }
           });
         };
-
         watch(activeTab, (newVal) => { if(newVal === 'home') renderChart(); });
-
         const exportData = () => {
           const dataStr = localStorage.getItem(getStorageKey());
           if(!dataStr) return alert('目前沒有資料可匯出！');
           const blob = new Blob([dataStr], {type: "application/json"});
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.href = url;
-          a.download = `stock_backup_${isCloudMode.value ? 'cloud' : 'local'}_${getToday()}.json`;
+          a.href = url; a.download = `stock_backup_${isCloudMode.value ? 'cloud' : 'local'}_${getToday()}.json`;
           a.click();
         };
-
         const importData = (event) => {
           const file = event.target.files[0];
           if(!file) return;
@@ -468,19 +336,15 @@
               const data = JSON.parse(e.target.result);
               if(data.records) {
                 localStorage.setItem(getStorageKey(), e.target.result);
-                loadData();
-                loadFormForDate(form.value.date);
-                alert('資料匯入成功！');
-                activeTab.value = 'home';
+                loadData(); loadFormForDate(form.value.date);
+                alert('資料匯入成功！'); activeTab.value = 'home';
               } else alert('無效的備份檔格式！');
             } catch(err) { alert('檔案解析失敗！'); }
             event.target.value = '';
           };
           reader.readAsText(file);
         };
-
         const formatMoney = (num) => new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(num);
-
         return {
           activeTab, isCloudMode, settings, form, totalAssetTwd, twPnL, usPnL,
           newTwAccountName, newUsAccountName, addAccount, removeAccount,
@@ -492,5 +356,3 @@
   </script>
 </body>
 </html>
-<!-- 檔案結尾，請確保複製到這裡 -->
-
