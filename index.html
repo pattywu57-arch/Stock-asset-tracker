@@ -133,6 +133,14 @@
             尚未新增任何美股帳戶，請至設定新增。
           </div>
           <div v-for="acc in settings.usAccounts" :key="acc" class="flex items-center mb-3">
+            <span class="w-16 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
+            <!-- 獨立幣別切換按鈕 -->
+            <button @click="toggleUsAccCurrency(acc)" class="px-2 py-1 text-[10px] bg-white border border-green-200 text-gray-600 rounded mr-2 font-bold w-12 text-center shadow-sm">
+              {{ getUsAccCurrency(acc) }}
+            </button>
+            <input type="number" v-model.number="form.usAssets[acc]" :placeholder="'餘額 (' + getUsAccCurrency(acc) + ')'" class="flex-1 p-2 rounded border border-gray-300 text-right">
+          </div>
+
             <span class="w-24 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
             <input type="number" v-model.number="form.usAssets[acc]" :placeholder="'餘額 (' + usInputCurrency + ')'" class="flex-1 p-2 rounded border border-gray-300 text-right">
           </div>
@@ -272,7 +280,45 @@
           } else {
             settings.value = { ...defaultSettings }; records.value = []; costTW.value = 0; costUS.value = 0;
           }
+          if (!settings.value.usAccountCurrencies) settings.value.usAccountCurrencies = {};
         };
+
+        const saveData = () => {
+          localStorage.setItem(getStorageKey(), JSON.stringify({
+            settings: settings.value, records: records.value, costTW: costTW.value, costUS: costUS.value
+          }));
+        };
+
+        // 智慧載入紀錄：選過去有記帳的日子會自動帶出當時的數字，選新的一天則是空白
+        const loadFormForDate = (dateStr) => {
+          const existingRecord = records.value.find(r => r.date === dateStr);
+          if (existingRecord) {
+            form.value.twAssets = existingRecord.twAssets ? { ...existingRecord.twAssets } : {};
+            form.value.usAssets = existingRecord.usAssets ? { ...existingRecord.usAssets } : {};
+            form.value.twIn = existingRecord.twIn || null;
+            form.value.twOut = existingRecord.twOut || null;
+            form.value.usIn = existingRecord.usIn || null;
+            form.value.usOut = existingRecord.usOut || null;
+          } else {
+            form.value.twAssets = {};
+            form.value.usAssets = {};
+            form.value.twIn = null;
+            form.value.twOut = null;
+            form.value.usIn = null;
+            form.value.usOut = null;
+          }
+        };
+
+        watch(() => form.value.date, (newDate) => {
+           loadFormForDate(newDate);
+        });
+
+        const getUsAccCurrency = (acc) => settings.value.usAccountCurrencies[acc] || 'USD';
+        const toggleUsAccCurrency = (acc) => {
+            settings.value.usAccountCurrencies[acc] = getUsAccCurrency(acc) === 'USD' ? 'TWD' : 'USD';
+            saveData();
+        };
+
 
         const saveData = () => {
           localStorage.setItem(getStorageKey(), JSON.stringify({
@@ -315,9 +361,10 @@
         };
 
         onMounted(() => {
-          loadData();
-          renderChart();
-        });
+  loadData();
+  loadFormForDate(form.value.date);
+  renderChart();
+});
 
         const latestRecord = computed(() => records.value.length > 0 ? records.value[records.value.length - 1] : null);
         const totalAssetTwd = computed(() => {
@@ -433,7 +480,7 @@
         return {
           activeTab, isCloudMode, usInputCurrency, settings, form, totalAssetTwd, twPnL, usPnL,
           newTwAccountName, newUsAccountName, addAccount, removeAccount,
-          saveRecord, toggleMode, saveData, exportData, importData, formatMoney
+          saveRecord, toggleMode, saveData, exportData, importData, formatMoney, getUsAccCurrency, toggleUsAccCurrency
         };
       }
     }).mount('#app');
