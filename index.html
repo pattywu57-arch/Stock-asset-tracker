@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>股票資產日記</title>
   
-  <!-- App 模式必備：允許 Android 與 iOS 偵測為 PWA 應用程式 -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#2563eb">
   
-  <!-- Web Manifest 內嵌機制：讓 Android 可以「安裝」並隱藏網址列 -->
   <link rel="manifest" href='data:application/manifest+json,{"name":"股票資產日記","short_name":"資產日記","start_url":".","display":"standalone","background_color":"#f3f4f6","theme_color":"#2563eb","orientation":"portrait"}' />
 
-  <!-- 引入資源 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -22,14 +19,12 @@
   
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    /* 避免手機拉動彈回的效果影響 App 感 */
     html, body { overscroll-behavior: none; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
   <div id="app" class="max-w-md mx-auto bg-white min-h-screen relative pb-20 shadow-lg flex flex-col">
     
-    <!-- 頂部導航 -->
     <header :class="['p-4 text-white text-center shadow-sm relative transition-colors', isCloudMode ? 'bg-indigo-600' : 'bg-blue-600']">
       <h1 class="text-lg font-bold">資產追蹤日記</h1>
       <span class="absolute right-4 top-4 text-xs bg-white/20 px-2 py-1 rounded-full font-medium">
@@ -38,12 +33,10 @@
       </span>
     </header>
 
-    <!-- 主內容區 -->
     <main class="flex-1 p-4 overflow-y-auto">
       
-      <!-- ================= 1. 首頁 (Home) ================= -->
       <div v-show="activeTab === 'home'">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 text-center animate-fade-in">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 text-center">
           <p class="text-gray-500 text-sm mb-1">總資產 (TWD)</p>
           <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ formatMoney(totalAssetTwd) }}</h2>
           
@@ -72,7 +65,6 @@
         </div>
       </div>
 
-      <!-- ================= 2. 記帳 (Record) ================= -->
       <div v-show="activeTab === 'record'">
         <h2 class="text-xl font-bold mb-4 text-gray-800">今日結算</h2>
         <div class="mb-4">
@@ -80,7 +72,6 @@
           <input type="date" v-model="form.date" class="w-full border-gray-300 rounded-lg p-2 border focus:border-blue-500 focus:outline-none">
         </div>
 
-        <!-- 台股區塊 -->
         <div class="bg-blue-50 rounded-lg p-4 mb-4">
           <h3 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2 flex justify-between items-center">
             <span>台股帳戶餘額 (TWD)</span>
@@ -105,7 +96,6 @@
           </div>
         </div>
 
-        <!-- 美股區塊 -->
         <div class="bg-green-50 rounded-lg p-4 mb-6">
           <h3 class="font-bold text-green-800 mb-3 border-b border-green-200 pb-2 flex justify-between items-center">
             <span>美股帳戶餘額 (USD)</span>
@@ -135,11 +125,9 @@
         </button>
       </div>
 
-      <!-- ================= 3. 設定 (Settings) ================= -->
       <div v-show="activeTab === 'settings'">
         <h2 class="text-xl font-bold mb-4 text-gray-800">設定與帳戶管理</h2>
         
-        <!-- 模式切換 -->
         <div class="bg-white rounded-lg border p-4 mb-4 flex justify-between items-center shadow-sm">
           <div>
             <h3 class="font-bold text-gray-800">儲存模式</h3>
@@ -150,7 +138,6 @@
           </button>
         </div>
 
-        <!-- 帳戶名稱自訂與管理 -->
         <div class="bg-white rounded-lg border p-4 mb-4 shadow-sm">
           <h3 class="font-bold text-gray-800 mb-3 border-b pb-2"><i class="fas fa-wallet mr-2 text-blue-500"></i>台股帳戶管理</h3>
           <div class="space-y-2 mb-3">
@@ -201,7 +188,6 @@
       </div>
     </main>
 
-    <!-- 底部導覽列 -->
     <nav class="bg-white border-t border-gray-200 flex justify-around absolute bottom-0 w-full pb-safe">
       <button @click="activeTab = 'home'" :class="['flex-1 py-3 text-center transition-colors', activeTab === 'home' ? (isCloudMode ? 'text-indigo-600' : 'text-blue-600') : 'text-gray-400']">
         <i class="fas fa-home text-xl mb-1 block"></i><span class="text-xs font-medium">首頁</span>
@@ -224,11 +210,9 @@
         const isCloudMode = ref(false);
         let chartInstance = null;
         
-        // 用於新增帳戶的暫存
         const newTwAccountName = ref('');
         const newUsAccountName = ref('');
         
-        // 預設與核心資料結構
         const defaultSettings = { twAccounts: ['群益', '元大', '中信'], usAccounts: ['Firstrade', '嘉信', 'IB'], usdRate: 32.5 };
         const settings = ref({ ...defaultSettings });
         const records = ref([]);
@@ -262,7 +246,6 @@
           }));
         };
 
-        // 新增與刪除帳戶
         const addAccount = (type) => {
           if (type === 'tw') {
             const name = newTwAccountName.value.trim();
@@ -300,10 +283,8 @@
         onMounted(() => {
           loadData();
           renderChart();
-          
-          // Android 專屬：登錄 PWA Service Worker (即使空實作也符合安裝標準)
           if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch",()=>{}).').catch(() => {});
+            navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch",()=>{});').catch(() => {});
           }
         });
 
@@ -405,4 +386,12 @@
         const formatMoney = (num) => new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(num);
 
         return {
-          activeTab, isCloudMode, settings, form, totalAssetTwd, t
+          activeTab, isCloudMode, settings, form, totalAssetTwd, twPnL, usPnL,
+          newTwAccountName, newUsAccountName, addAccount, removeAccount,
+          saveRecord, toggleMode, saveData, exportData, importData, formatMoney
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
