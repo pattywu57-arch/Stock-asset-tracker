@@ -3,19 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>股票資產記帳本</title>
+  <title>股票資產日記</title>
+  
+  <!-- App 模式必備：允許 Android 與 iOS 偵測為 PWA 應用程式 -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#2563eb">
+  
+  <!-- Web Manifest 內嵌機制：讓 Android 可以「安裝」並隱藏網址列 -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"股票資產日記","short_name":"資產日記","start_url":".","display":"standalone","background_color":"#f3f4f6","theme_color":"#2563eb","orientation":"portrait"}' />
+
+  <!-- 引入資源 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    /* 避免手機拉動彈回的效果影響 App 感 */
+    html, body { overscroll-behavior: none; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
   <div id="app" class="max-w-md mx-auto bg-white min-h-screen relative pb-20 shadow-lg flex flex-col">
     
-    <!-- 頂部標題與模式標籤 -->
+    <!-- 頂部導航 -->
     <header :class="['p-4 text-white text-center shadow-sm relative transition-colors', isCloudMode ? 'bg-indigo-600' : 'bg-blue-600']">
       <h1 class="text-lg font-bold">資產追蹤日記</h1>
       <span class="absolute right-4 top-4 text-xs bg-white/20 px-2 py-1 rounded-full font-medium">
@@ -24,12 +38,12 @@
       </span>
     </header>
 
-    <!-- 內容區域 -->
+    <!-- 主內容區 -->
     <main class="flex-1 p-4 overflow-y-auto">
       
       <!-- ================= 1. 首頁 (Home) ================= -->
       <div v-show="activeTab === 'home'">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 text-center">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 text-center animate-fade-in">
           <p class="text-gray-500 text-sm mb-1">總資產 (TWD)</p>
           <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ formatMoney(totalAssetTwd) }}</h2>
           
@@ -50,7 +64,10 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-          <h3 class="text-gray-600 font-semibold mb-3 text-sm"><i class="fas fa-chart-line mr-2" :class="isCloudMode ? 'text-indigo-500' : 'text-blue-500'"></i>資產走勢 (TWD)</h3>
+          <h3 class="text-gray-600 font-semibold mb-3 text-sm">
+            <i class="fas fa-chart-line mr-2" :class="isCloudMode ? 'text-indigo-500' : 'text-blue-500'"></i>
+            資產走勢 (TWD)
+          </h3>
           <canvas id="assetChart" width="400" height="250"></canvas>
         </div>
       </div>
@@ -65,9 +82,15 @@
 
         <!-- 台股區塊 -->
         <div class="bg-blue-50 rounded-lg p-4 mb-4">
-          <h3 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2">台股帳戶餘額 (TWD)</h3>
+          <h3 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2 flex justify-between items-center">
+            <span>台股帳戶餘額 (TWD)</span>
+            <span class="text-xs font-normal text-blue-500 cursor-pointer" @click="activeTab = 'settings'">管理帳戶 ➔</span>
+          </h3>
+          <div v-if="settings.twAccounts.length === 0" class="text-center py-2 text-gray-400 text-sm">
+            尚未新增任何台股帳戶，請至設定新增。
+          </div>
           <div v-for="acc in settings.twAccounts" :key="acc" class="flex items-center mb-3">
-            <span class="w-16 text-sm text-gray-700">{{ acc }}</span>
+            <span class="w-24 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
             <input type="number" v-model.number="form.twAssets[acc]" placeholder="今日餘額" class="flex-1 p-2 rounded border border-gray-300 text-right">
           </div>
           <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-blue-200">
@@ -84,9 +107,15 @@
 
         <!-- 美股區塊 -->
         <div class="bg-green-50 rounded-lg p-4 mb-6">
-          <h3 class="font-bold text-green-800 mb-3 border-b border-green-200 pb-2">美股帳戶餘額 (USD)</h3>
+          <h3 class="font-bold text-green-800 mb-3 border-b border-green-200 pb-2 flex justify-between items-center">
+            <span>美股帳戶餘額 (USD)</span>
+            <span class="text-xs font-normal text-green-500 cursor-pointer" @click="activeTab = 'settings'">管理帳戶 ➔</span>
+          </h3>
+          <div v-if="settings.usAccounts.length === 0" class="text-center py-2 text-gray-400 text-sm">
+            尚未新增任何美股帳戶，請至設定新增。
+          </div>
           <div v-for="acc in settings.usAccounts" :key="acc" class="flex items-center mb-3">
-            <span class="w-16 text-sm text-gray-700">{{ acc }}</span>
+            <span class="w-24 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
             <input type="number" v-model.number="form.usAssets[acc]" placeholder="今日餘額" class="flex-1 p-2 rounded border border-gray-300 text-right">
           </div>
           <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-green-200">
@@ -108,7 +137,7 @@
 
       <!-- ================= 3. 設定 (Settings) ================= -->
       <div v-show="activeTab === 'settings'">
-        <h2 class="text-xl font-bold mb-4 text-gray-800">設定與資料管理</h2>
+        <h2 class="text-xl font-bold mb-4 text-gray-800">設定與帳戶管理</h2>
         
         <!-- 模式切換 -->
         <div class="bg-white rounded-lg border p-4 mb-4 flex justify-between items-center shadow-sm">
@@ -119,6 +148,35 @@
           <button @click="toggleMode" :class="['px-4 py-2 rounded-full font-bold text-sm text-white transition-colors', isCloudMode ? 'bg-gray-500' : 'bg-indigo-600']">
             切換至{{ isCloudMode ? '本機' : '雲端' }}
           </button>
+        </div>
+
+        <!-- 帳戶名稱自訂與管理 -->
+        <div class="bg-white rounded-lg border p-4 mb-4 shadow-sm">
+          <h3 class="font-bold text-gray-800 mb-3 border-b pb-2"><i class="fas fa-wallet mr-2 text-blue-500"></i>台股帳戶管理</h3>
+          <div class="space-y-2 mb-3">
+            <div v-for="(acc, index) in settings.twAccounts" :key="index" class="flex gap-2 items-center">
+              <input type="text" v-model="settings.twAccounts[index]" @change="saveData" class="flex-1 p-2 border rounded text-sm">
+              <button @click="removeAccount('tw', index)" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" v-model="newTwAccountName" placeholder="新增台股帳戶名稱" class="flex-1 p-2 border rounded text-sm">
+            <button @click="addAccount('tw')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm">新增</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border p-4 mb-4 shadow-sm">
+          <h3 class="font-bold text-gray-800 mb-3 border-b pb-2"><i class="fas fa-globe mr-2 text-green-500"></i>美股帳戶管理</h3>
+          <div class="space-y-2 mb-3">
+            <div v-for="(acc, index) in settings.usAccounts" :key="index" class="flex gap-2 items-center">
+              <input type="text" v-model="settings.usAccounts[index]" @change="saveData" class="flex-1 p-2 border rounded text-sm">
+              <button @click="removeAccount('us', index)" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" v-model="newUsAccountName" placeholder="新增美股帳戶名稱" class="flex-1 p-2 border rounded text-sm">
+            <button @click="addAccount('us')" class="bg-green-600 text-white px-4 py-2 rounded font-bold text-sm">新增</button>
+          </div>
         </div>
 
         <div class="bg-white rounded-lg border p-4 mb-4 shadow-sm">
@@ -166,21 +224,23 @@
         const isCloudMode = ref(false);
         let chartInstance = null;
         
-        // 核心資料結構
+        // 用於新增帳戶的暫存
+        const newTwAccountName = ref('');
+        const newUsAccountName = ref('');
+        
+        // 預設與核心資料結構
         const defaultSettings = { twAccounts: ['群益', '元大', '中信'], usAccounts: ['Firstrade', '嘉信', 'IB'], usdRate: 32.5 };
         const settings = ref({ ...defaultSettings });
         const records = ref([]);
         const costTW = ref(0);
         const costUS = ref(0);
 
-        // 表單資料
         const getToday = () => {
           const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
           return d.toISOString().split('T')[0];
         };
         const form = ref({ date: getToday(), twAssets: {}, usAssets: {}, twIn: null, twOut: null, usIn: null, usOut: null });
 
-        // 儲存邏輯 (使用不同的 Key 區分本機與雲端模擬)
         const getStorageKey = () => isCloudMode.value ? 'stock_app_cloud_v1' : 'stock_app_local_v1';
         
         const loadData = () => {
@@ -192,7 +252,7 @@
             costTW.value = data.costTW || 0;
             costUS.value = data.costUS || 0;
           } else {
-            records.value = []; costTW.value = 0; costUS.value = 0;
+            settings.value = { ...defaultSettings }; records.value = []; costTW.value = 0; costUS.value = 0;
           }
         };
 
@@ -200,6 +260,34 @@
           localStorage.setItem(getStorageKey(), JSON.stringify({
             settings: settings.value, records: records.value, costTW: costTW.value, costUS: costUS.value
           }));
+        };
+
+        // 新增與刪除帳戶
+        const addAccount = (type) => {
+          if (type === 'tw') {
+            const name = newTwAccountName.value.trim();
+            if (!name) return alert('請輸入帳戶名稱');
+            if (settings.value.twAccounts.includes(name)) return alert('帳戶名稱已存在');
+            settings.value.twAccounts.push(name);
+            newTwAccountName.value = '';
+          } else {
+            const name = newUsAccountName.value.trim();
+            if (!name) return alert('請輸入帳戶名稱');
+            if (settings.value.usAccounts.includes(name)) return alert('帳戶名稱已存在');
+            settings.value.usAccounts.push(name);
+            newUsAccountName.value = '';
+          }
+          saveData();
+        };
+
+        const removeAccount = (type, index) => {
+          if (!confirm('刪除帳戶不會刪除歷史紀錄，但在今日記帳時會移除該項目，確定刪除嗎？')) return;
+          if (type === 'tw') {
+            settings.value.twAccounts.splice(index, 1);
+          } else {
+            settings.value.usAccounts.splice(index, 1);
+          }
+          saveData();
         };
 
         const toggleMode = () => {
@@ -212,9 +300,13 @@
         onMounted(() => {
           loadData();
           renderChart();
+          
+          // Android 專屬：登錄 PWA Service Worker (即使空實作也符合安裝標準)
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch",()=>{}).').catch(() => {});
+          }
         });
 
-        // 計算總資產與損益
         const latestRecord = computed(() => records.value.length > 0 ? records.value[records.value.length - 1] : null);
         const totalAssetTwd = computed(() => {
           if (!latestRecord.value) return 0;
@@ -223,7 +315,6 @@
         const twPnL = computed(() => latestRecord.value ? latestRecord.value.totalTW - costTW.value : 0);
         const usPnL = computed(() => latestRecord.value ? latestRecord.value.totalUS - costUS.value : 0);
 
-        // 儲存今日紀錄
         const saveRecord = () => {
           if(!form.value.date) return alert("請選擇日期！");
           
@@ -255,16 +346,15 @@
           activeTab.value = 'home';
         };
 
-        // 繪製走勢圖
         const renderChart = async () => {
           await nextTick();
           const ctx = document.getElementById('assetChart');
           if (!ctx) return;
           if (chartInstance) chartInstance.destroy();
           
-          const labels = records.value.map(r => r.date.substring(5)); // MM-DD
+          const labels = records.value.map(r => r.date.substring(5));
           const dataPoints = records.value.map(r => r.totalTW + (r.totalUS * settings.value.usdRate));
-          const color = isCloudMode.value ? '#4f46e5' : '#2563eb'; // Indigo for cloud, Blue for local
+          const color = isCloudMode.value ? '#4f46e5' : '#2563eb';
 
           chartInstance = new Chart(ctx, {
             type: 'line',
@@ -282,7 +372,6 @@
 
         watch(activeTab, (newVal) => { if(newVal === 'home') renderChart(); });
 
-        // 匯出與匯入功能
         const exportData = () => {
           const dataStr = localStorage.getItem(getStorageKey());
           if(!dataStr) return alert('目前沒有資料可匯出！');
@@ -308,7 +397,7 @@
                 activeTab.value = 'home';
               } else alert('無效的備份檔格式！');
             } catch(err) { alert('檔案解析失敗！'); }
-            event.target.value = ''; // 重置 file input
+            event.target.value = '';
           };
           reader.readAsText(file);
         };
@@ -316,11 +405,4 @@
         const formatMoney = (num) => new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(num);
 
         return {
-          activeTab, isCloudMode, settings, form, totalAssetTwd, twPnL, usPnL,
-          saveRecord, toggleMode, saveData, exportData, importData, formatMoney
-        };
-      }
-    }).mount('#app');
-  </script>
-</body>
-</html>
+          activeTab, isCloudMode, settings, form, totalAssetTwd, t
