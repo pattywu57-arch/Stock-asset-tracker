@@ -59,12 +59,14 @@
                 {{ twPnL >= 0 ? '+' : '' }}{{ formatMoney(twPnL) }}
               </p>
             </div>
-            <div class="border-l">
+             <div class="border-l relative">
               <p class="text-xs text-gray-500 mb-1">美股總損益 (USD)</p>
               <p :class="['font-semibold', usPnL >= 0 ? 'text-red-500' : 'text-green-500']">
                 {{ usPnL >= 0 ? '+' : '' }}{{ formatMoney(usPnL) }}
               </p>
+              <p class="text-[10px] text-gray-400 mt-1">約 TWD {{ usPnL >= 0 ? '+' : '' }}{{ formatMoney(usPnL * settings.usdRate) }}</p>
             </div>
+
           </div>
         </div>
 
