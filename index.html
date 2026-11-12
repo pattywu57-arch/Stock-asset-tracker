@@ -134,12 +134,9 @@
           <div v-if="settings.usAccounts.length === 0" class="text-center py-2 text-gray-400 text-sm">
             尚未新增任何美股帳戶，請至設定新增。
           </div>
-         <div v-for="acc in settings.usAccounts" :key="acc" class="flex items-center mb-3">
-            <span class="w-16 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
-            <button @click="toggleUsAccCurrency(acc)" class="px-2 py-1 text-[10px] bg-white border border-green-200 text-gray-600 rounded mr-2 font-bold w-12 text-center shadow-sm">
-              {{ getUsAccCurrency(acc) }}
-            </button>
-            <input type="number" v-model.number="form.usAssets[acc]" :placeholder="'餘額 (' + getUsAccCurrency(acc) + ')'" class="flex-1 p-2 rounded border border-gray-300 text-right">
+          <div v-for="acc in settings.usAccounts" :key="acc" class="flex items-center mb-3">
+            <span class="w-24 text-sm text-gray-700 truncate font-medium">{{ acc }}</span>
+            <input type="number" v-model.number="form.usAssets[acc]" :placeholder="'餘額 (' + usInputCurrency + ')'" class="flex-1 p-2 rounded border border-gray-300 text-right">
           </div>
 
           <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-green-200">
